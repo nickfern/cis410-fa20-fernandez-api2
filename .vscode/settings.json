@@ -1,0 +1,8 @@
+{
+    "appService.zipIgnorePattern": [
+        "node_modules{,/**}",
+        ".vscode{,/**}"
+    ],
+    "appService.defaultWebAppToDeploy": "/subscriptions/fd2a6bc5-cbb7-446e-a90b-c4b3eea82579/resourceGroups/appsvc_linux_centralus/providers/Microsoft.Web/sites/cis410-fa20-fernandez-api",
+    "appService.deploySubpath": "."
+}
