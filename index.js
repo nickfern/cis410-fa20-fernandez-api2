@@ -14,8 +14,31 @@ app.use(express.json())
 app.use(cors())
 
 
+app.post('/Customer/logout', auth, (req,res)=>{
+    var query = `UPDATE Customer
+    SET Token = NULL
+    WHERE CustomerID = ${req.Customer.CustomerID}`
 
-app.post("/order", auth,  async (req,res)=>{
+    db.executeQuery(query)
+        .then(()=>{res.status(200).send()})
+        .catch((error)=>{
+            console.log("error in POST /Customer/logout",error)
+            res.status(500).send()
+        })
+})
+
+
+// app.get('/Order1/me', auth, async(req,res)=>{
+//     let CustomerID = req.Customer.CustomerID;
+
+// })
+
+app.get('/', (req,res)=>{
+    res.send("Hello World.")
+})
+
+
+app.post("/Order1", auth,  async (req,res)=>{
 
     try{
         var CustomerFK = req.body.CustomerFK;
@@ -23,7 +46,7 @@ app.post("/order", auth,  async (req,res)=>{
         var OrderDate = req.body.OrderDate;
         var AdmissionType = req.body.AdmissionType;
     
-        if(!CustomerFK || !ConcertFK || !OrderDate || !AdmissionType){
+        if(!ConcertFK || !OrderDate || !AdmissionType){
             res.status(400).send("bad request")
         }
 
@@ -32,9 +55,9 @@ app.post("/order", auth,  async (req,res)=>{
         // console.log("here is the contact in /reviews",req.contact)
         // res.send("here is your response")}
     
-        let insertQuery = `INSERT INTO Order(CustomerFK, AdmissionType, OrderDate, ConcertFK)
+        let insertQuery = `INSERT INTO Order1(CustomerFK, AdmissionType, OrderDate, ConcertFK)
         OUTPUT inserted.TicketID, inserted.CustomerFK, inserted.OrderDate, inserted.AdmissionType
-        VALUES('${AdmissionType}','${OrderDate}','${ConcertFK}',${req.Customer.CustomerID})`
+        VALUES(${req.Customer.CustomerID},'${AdmissionType}','${OrderDate}','${ConcertFK}')`
 
         let insertedReview = await db.executeQuery(insertQuery)
 
@@ -159,11 +182,11 @@ app.post("/Customer", async (req,res)=>{
     })
 })
 
-app.get("/Concert1",(req,res)=>{
+app.get("/Concert",(req,res)=>{
     //get data from database
-    db.executeQuery(`SELECT * FROM Concert1
+    db.executeQuery(`SELECT * FROM Concert
      LEFT JOIN genre
-     ON genre.GenreID = Concert1.GenreFK`)
+     ON genre.GenreID = Concert.GenreFK`)
      .then((result)=>{
          res.status(200).send(result)
      })
@@ -172,14 +195,14 @@ app.get("/Concert1",(req,res)=>{
          res.status(500).send()
      })
 })
-app.get("/Concert1/:pk", (req,res)=>{
+app.get("/Concert/:pk", (req,res)=>{
     var pk = req.params.pk
     console.log("my PK:" , pk)
 
     var myQuery = `select *
-    from Concert1
+    from Concert
     left join Genre
-    on Genre.GenreID = Concert1.GenreFK
+    on Genre.GenreID = Concert.GenreFK
     Where ConcertID = ${pk}`
 
     db.executeQuery(myQuery)
@@ -190,7 +213,32 @@ app.get("/Concert1/:pk", (req,res)=>{
             }else{res.status(404).send('bad request')}
         })
         .catch((err)=>{
-            console.log("Error in /Concert1/pk", err)
+            console.log("Error in /Concert/pk", err)
+            res.status(500).send()
+        })
+})
+
+app.get("/Order1/me", auth, async (req,res)=>{
+    let CustomerID = req.Customer.CustomerID
+    // console.log("my PK:" , pk)
+
+    var myQuery = `select *
+    from Order1
+    left join Concert
+    on Concert.ConcertID = Order1.ConcertFK
+    Where CustomerFK = ${CustomerID}`
+
+    console.log(myQuery)
+
+    db.executeQuery(myQuery)
+        .then((Order)=>{
+            //console.log("Movies: ",movies)
+            if(Order[0]){
+                res.send(Order[0])
+            }else{res.status(404).send('bad request')}
+        })
+        .catch((err)=>{
+            console.log("Error in /Order/me", err)
             res.status(500).send()
         })
 })
